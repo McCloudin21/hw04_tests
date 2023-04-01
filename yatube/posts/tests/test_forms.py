@@ -4,7 +4,6 @@ import tempfile
 from posts.forms import PostForm
 from ..models import Post, Group
 from django.conf import settings
-from django.core.files.uploadedfile import UploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -56,7 +55,7 @@ class PostCreateFormTests(TestCase):
         )
         self.assertRedirects(response, reverse('posts:profile',
                                                args=[self.posts.author]))
-        self.assertEqual(Post.objects.count(), posts_count+1)
+        self.assertEqual(Post.objects.count(), posts_count + 1)
         self.assertTrue(
             Post.objects.filter(
                 text=test_text,

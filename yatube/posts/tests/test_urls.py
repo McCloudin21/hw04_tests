@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from http import HTTPStatus
-from django.shortcuts import reverse
 from django.test import (TestCase,
                          Client,
                          )
