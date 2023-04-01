@@ -25,24 +25,23 @@ class PostURLTests(TestCase):
         )
         cls.post = Post.objects.create(
             text='Тестовый текст',
-            author=User.objects.create_user(username='author')
+            author=cls.user
         )
 
     def setUp(self):
         self.guest_client = Client()
-        self.user = User.objects.create_user(username='NoName')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
     def test_homepage(self):
         """Тестирование статуса страниц"""
-        pages = {
-            '/': 200,
-            f'/group/{self.group.slug}/': 200,
-            f'/profile/{self.user}/': 200,
-            f'/posts/{self.post.id}/': 200,
-        }
-        for adress, status_code in pages.items():
+        pages = [
+            '/',
+            f'/group/{self.group.slug}/',
+            f'/profile/{self.user}/',
+            f'/posts/{self.post.id}/',
+        ]
+        for adress in pages:
             with self.subTest(adress=adress):
                 response = self.authorized_client.get(adress)
                 error_name: str = f'Ошибка: нет доступа до страницы {adress}'
