@@ -52,21 +52,14 @@ class PostPagesTests(TestCase):
         """Страница index использует нужный контекст."""
         response = self.authorized_client.get(reverse('posts:index'))
         self.assertIn('page_obj', response.context)
-        first_object = response.context.get('page_obj')[0]
-        post_author_0 = first_object.author.username
-        post_text_0 = first_object.text
-        post_group_0 = first_object.group.title
-        self.assertEqual(post_author_0, 'StasBasov')
-        self.assertEqual(post_text_0, 'Текст')
-        self.assertEqual(post_group_0, 'Тестовая группа')
+        page_object = response.context.get('page_obj')[0]
+        self.assertEqual(page_object.author.username, 'StasBasov')
+        self.assertEqual(page_object.text, 'Текст')
+        self.assertEqual(page_object.group.title, 'Тестовая группа')
 
     def test_group_list_page_show_correct_context(self):
         """Страница group_list использует нужный контекст."""
         response = self.authorized_client.get(f'/group/{self.group.slug}/')
-        first_object = response.context.get('page_obj')[0]
-        post_author_0 = first_object.author.username
-        post_text_0 = first_object.text
-        post_group_0 = first_object.group.title
         objects = [
             'group',
             'page_obj',
@@ -74,42 +67,40 @@ class PostPagesTests(TestCase):
         for object in objects:
             with self.subTest(object=object):
                 self.assertIn(object, response.context)
-                self.assertEqual(post_author_0, 'StasBasov')
-                self.assertEqual(post_text_0, 'Текст')
-                self.assertEqual(post_group_0, 'Тестовая группа')
+                page_object = response.context.get('page_obj')[0]
+                self.assertEqual(page_object.author.username, 'StasBasov')
+                self.assertEqual(page_object.text, 'Текст')
+                self.assertEqual(page_object.group.title, 'Тестовая группа')
 
     def test_profile_page_show_correct_context(self):
         """Страница profile использует нужный контекст."""
         response = self.authorized_client.get(f'/profile/{self.user}/')
-        first_object = response.context.get('page_obj')[0]
-        post_author_0 = first_object.author.username
-        post_text_0 = first_object.text
-        post_group_0 = first_object.group.title
-        objects = [
+        expected_keys = [
             'author',
             'title',
             'posts_count',
             'page_obj',
         ]
-        for object in objects:
-            with self.subTest(object=object):
-                self.assertIn(object, response.context)
-                self.assertEqual(post_author_0, 'StasBasov')
-                self.assertEqual(post_text_0, 'Текст')
-                self.assertEqual(post_group_0, 'Тестовая группа')
+        for key in expected_keys:
+            with self.subTest(key=key):
+                self.assertIn(key, response.context)
+                page_object = response.context.get('page_obj')[0]
+                self.assertEqual(page_object.author.username, 'StasBasov')
+                self.assertEqual(page_object.text, 'Текст')
+                self.assertEqual(page_object.group.title, 'Тестовая группа')
 
     def test_post_detail_show_correct_context(self):
         """Страница post_detail использует нужный контекст."""
         response = self.authorized_client.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.id})
         )
-        objects = [
+        expected_keys = [
             'post',
             'posts_count',
         ]
-        for object in objects:
-            with self.subTest(object=object):
-                self.assertIn(object, response.context)
+        for key in expected_keys:
+            with self.subTest(key=key):
+                self.assertIn(key, response.context)
                 self.assertEqual(
                     response.context.get('post').text, self.post.text
                 )
@@ -129,15 +120,15 @@ class PostPagesTests(TestCase):
             'text': forms.fields.CharField,
             'group': forms.models.ModelChoiceField,
         }
-        objects = [
+        expected_keys = [
             'form',
             'is_form_edit',
             'post',
             'title',
         ]
-        for object in objects:
-            with self.subTest(object=object):
-                self.assertIn(object, response.context)
+        for key in expected_keys:
+            with self.subTest(key=key):
+                self.assertIn(key, response.context)
                 for value, expected in form_fields.items():
                     with self.subTest(value=value):
                         form_field = response.context['form'].fields[value]
@@ -152,13 +143,13 @@ class PostPagesTests(TestCase):
         }
         self.assertIn('form', response.context)
         self.assertIn('title', response.context)
-        objects = [
+        expected_keys = [
             'form',
             'title',
         ]
-        for object in objects:
-            with self.subTest(object=object):
-                self.assertIn(object, response.context)
+        for key in expected_keys:
+            with self.subTest(key=key):
+                self.assertIn(key, response.context)
                 for value, expected in form_fields.items():
                     with self.subTest(value=value):
                         form_field = response.context['form'].fields[value]

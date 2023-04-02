@@ -32,9 +32,8 @@ class PostCreateFormTests(TestCase):
     def test_create_form(self):
         """Валидная форма создает запись в post."""
         posts_count = Post.objects.count()
-        test_text = ('Test_text')
         form_data = {
-            'text': test_text,
+            'text': 'test_text',
             'group': self.group.id
         }
         response = self.authorized_client.post(
@@ -46,15 +45,30 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(Post.objects.count(), posts_count + 1)
         self.assertTrue(
             Post.objects.filter(
-                text=test_text,
+                text='test_text',
                 group=self.group.id,
             ).exists()
         )
 
-    def test_create_form_asks_editing(self):
-        """Не валидная форма просит редактирование."""
+    def test_create_page_asks_fill_field(self):
+        """Не валидная форма просит заполнить поле."""
         posts_count = Post.objects.count()
+        form_data = {
+            'text': ' ',
+            'group': self.group.id
+        }
+        response = self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+        )
         self.assertEqual(Post.objects.count(), posts_count)
+        self.assertFormError(
+            response,
+            'form',
+            'text',
+            'Обязательное поле.',
+        )
+        self.assertEqual(response.status_code, 200)
 
     def test_create_post_guest_user(self):
         """Валидная форма не создаст запись в Post если неавторизован."""
@@ -102,9 +116,8 @@ class PostEditFormTests(TestCase):
 
     def test_edit_form(self):
         """Валидная форма редактирует запись в post."""
-        test_text = ('Test_text2')
         form_data = {
-            'text': test_text,
+            'text': 'test_text2',
         }
         response = self.authorized_client.post(
             reverse('posts:post_edit', args=[self.posts.id]),
@@ -114,7 +127,7 @@ class PostEditFormTests(TestCase):
                                                args=[self.posts.id]))
         self.assertTrue(
             Post.objects.filter(
-                text=test_text,
+                text='test_text2',
             ).exists()
         )
 
