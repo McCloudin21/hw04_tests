@@ -69,7 +69,6 @@ class PostPagesTests(TestCase):
         post_group_0 = first_object.group.title
         objects = [
             'group',
-            'posts',
             'page_obj',
         ]
         for object in objects:

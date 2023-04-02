@@ -28,7 +28,6 @@ def group_posts(request, slug):
     page_obj = paginator.get_page(page_number)
     context = {
         'group': group,
-        'posts': posts_list,
         'page_obj': page_obj,
     }
     return render(request, 'posts/group_list.html', context)
@@ -90,6 +89,6 @@ def post_edit(request, post_id):
 
     return render(request, 'posts/post_create.html',
                   context={'form': form,
-                           'is_form_edit': is_form_edit,
                            'post': post,
+                           'is_form_edit': is_form_edit,
                            'title': title})
