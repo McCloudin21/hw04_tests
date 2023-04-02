@@ -112,13 +112,13 @@ class PostPagesTests(TestCase):
                 self.assertIn(object, response.context)
                 self.assertEqual(
                     response.context.get('post').text, self.post.text
-                    )
+                )
                 self.assertEqual(
                     response.context.get('post').author, self.post.author
-                    )
+                )
                 self.assertEqual(
                     response.context.get('post').group, self.post.group
-                    )
+                )
 
     def test_create_edit_show_correct_context(self):
         """Страница post_edit использует нужный контекст."""
