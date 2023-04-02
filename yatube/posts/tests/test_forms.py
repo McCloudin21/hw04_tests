@@ -1,19 +1,12 @@
-import shutil
-import tempfile
-
 from posts.forms import PostForm
 from ..models import Post, Group
-from django.conf import settings
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 User = get_user_model()
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostCreateFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -27,7 +20,6 @@ class PostCreateFormTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         self.group = Group.objects.create(
@@ -62,6 +54,39 @@ class PostCreateFormTests(TestCase):
                 group=self.group.id,
             ).exists()
         )
+
+    def test_create_form(self):
+        """Не валидная форма просит редактирование."""
+        posts_count = Post.objects.count()
+        form_data = {
+            'group': self.group.id
+        }
+        response = self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+        )
+        self.assertEqual(Post.objects.count(), posts_count)
+
+    def test_create_not_create_guest_client(self):
+        """Валидная форма не создаст запись в Post если неавторизован."""
+        self.post = Post.objects.create(
+            author=self.user,
+            text="Тестовый текст",
+        )
+        posts_count = Post.objects.count()
+        form_data = {
+            "text": "Изменяем текст",
+            "group": self.group.id
+        }
+        response = self.guest_client.post(
+            reverse("posts:post_edit", args=({self.post.id})),
+            data=form_data,
+        )
+        self.assertRedirects(response,
+                             f"/auth/login/?next=/posts/{self.post.id}/edit/"
+                             )
+        self.assertEqual(Post.objects.count(), posts_count)
+        self.assertFalse(Post.objects.filter(text="Изменяем текст").exists())
 
 
 class PostEditFormTests(TestCase):
@@ -103,3 +128,26 @@ class PostEditFormTests(TestCase):
                 text=test_text,
             ).exists()
         )
+
+    def test_post_edit_not_create_guest_client(self):
+        """Валидная форма не изменит запись в Post если неавторизован."""
+        self.post = Post.objects.create(
+            author=self.user,
+            text="Тестовый текст",
+        )
+        self.group = Group.objects.create(
+            title="Тестовая группа",
+            slug="test-slug",
+            description="Тестовое описание",
+        )
+        posts_count = Post.objects.count()
+        form_data = {"text": "Изменяем текст", "group": self.group.id}
+        response = self.guest_client.post(
+            reverse("posts:post_edit", args=({self.post.id})),
+            data=form_data,
+        )
+        self.assertRedirects(response,
+                             f"/auth/login/?next=/posts/{self.post.id}/edit/"
+                             )
+        self.assertEqual(Post.objects.count(), posts_count)
+        self.assertFalse(Post.objects.filter(text="Изменяем текст").exists())

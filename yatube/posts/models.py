@@ -18,6 +18,7 @@ class Group(models.Model):
 class Post(models.Model):
     text = models.TextField(
         verbose_name='Текст поста',
+        help_text='Напишите сюда текст'
     )
     pub_date = models.DateTimeField(
         'Дата публикации',

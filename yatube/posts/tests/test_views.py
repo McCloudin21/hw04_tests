@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -6,7 +7,10 @@ from posts.models import (Post,
                           Group,
                           )
 
-TEST_OF_POST: int = 13
+POSTS_ON_PAGE: int = 13
+POSTS_ON_FIRST_PAGE: int = 10
+POSTS_ON_SECOND_PAGE: int = 3
+
 User = get_user_model()
 
 
@@ -21,6 +25,8 @@ class PostPagesTests(TestCase):
         self.authorized_client.force_login(self.user)
         self.group = Group.objects.create(title='Тестовая группа',
                                           slug='test_group')
+        self.group2 = Group.objects.create(title='Тестовая группа 2',
+                                           slug='test_group_2')
         self.post = Post.objects.create(
             author=self.user,
             text='Текст',
@@ -28,6 +34,7 @@ class PostPagesTests(TestCase):
         )
 
     def test_pages_uses_correct_template(self):
+        """Страницы используют корректные шаблоны."""
         templates_pages_names = {
             '/': 'posts/index.html',
             f'/group/{self.group.slug}/': 'posts/group_list.html',
@@ -42,6 +49,7 @@ class PostPagesTests(TestCase):
                 self.assertTemplateUsed(response, template, error_name)
 
     def test_home_page_show_correct_context(self):
+        """Страница index использует нужный контекст."""
         response = self.authorized_client.get(reverse('posts:index'))
         first_object = response.context.get('page_obj')[0]
         post_author_0 = first_object.author.username
@@ -50,6 +58,85 @@ class PostPagesTests(TestCase):
         self.assertEqual(post_author_0, 'StasBasov')
         self.assertEqual(post_text_0, 'Текст')
         self.assertEqual(post_group_0, 'Тестовая группа')
+
+    def test_group_list_page_show_correct_context(self):
+        """Страница group_list использует нужный контекст."""
+        response = self.authorized_client.get(f'/group/{self.group.slug}/')
+        first_object = response.context.get('page_obj')[0]
+        post_author_0 = first_object.author.username
+        post_text_0 = first_object.text
+        post_group_0 = first_object.group.title
+        self.assertEqual(post_author_0, 'StasBasov')
+        self.assertEqual(post_text_0, 'Текст')
+        self.assertEqual(post_group_0, 'Тестовая группа')
+
+    def test_profile_page_show_correct_context(self):
+        """Страница profile использует нужный контекст."""
+        response = self.authorized_client.get(f'/profile/{self.user}/')
+        first_object = response.context.get('page_obj')[0]
+        post_author_0 = first_object.author.username
+        post_text_0 = first_object.text
+        post_group_0 = first_object.group.title
+        self.assertEqual(post_author_0, 'StasBasov')
+        self.assertEqual(post_text_0, 'Текст')
+        self.assertEqual(post_group_0, 'Тестовая группа')
+
+    def test_post_detail_show_correct_context(self):
+        """Страница post_detail использует нужный контекст."""
+        response = self.authorized_client.get(
+            reverse('posts:post_detail', kwargs={'post_id': self.post.id})
+        )
+        self.assertEqual(response.context.get('post').text, self.post.text)
+        self.assertEqual(response.context.get('post').author, self.post.author)
+        self.assertEqual(response.context.get('post').group, self.post.group)
+
+    def test_create_edit_show_correct_context(self):
+        """Страница post_edit использует нужный контекст."""
+        response = self.authorized_client.get(
+            reverse('posts:post_edit', kwargs={'post_id': self.post.id})
+        )
+        form_fields = {
+            'text': forms.fields.CharField,
+            'group': forms.models.ModelChoiceField,
+        }
+        for value, expected in form_fields.items():
+            with self.subTest(value=value):
+                form_field = response.context['form'].fields[value]
+                self.assertIsInstance(form_field, expected)
+
+    def test_create_show_correct_context(self):
+        """Страница create использует нужный контекст."""
+        response = self.authorized_client.get(reverse('posts:post_create'))
+        form_fields = {
+            'text': forms.fields.CharField,
+            'group': forms.models.ModelChoiceField,
+        }
+        for value, expected in form_fields.items():
+            with self.subTest(value=value):
+                form_field = response.context['form'].fields[value]
+                self.assertIsInstance(form_field, expected)
+
+    def test_post_shown_in_desired_group(self):
+        """Пост записывается в нужную группу."""
+        pages = [
+            '/',
+            f'/group/{self.group.id}/'
+        ]
+        for adress in pages:
+            with self.subTest(adress=adress):
+                self.assertTrue(
+                    Post.objects.filter(text=self.post.text,
+                                        group=self.group.id
+                                        ).exists()
+                )
+
+    def test_post_not_shown_in_desired_group(self):
+        """Пост не записывается в другую группу"""
+        self.assertFalse(
+            Post.objects.filter(text=self.post.text,
+                                group=self.group2.id
+                                ).exists()
+        )
 
 
 class PaginatorViewsTest(TestCase):
@@ -61,17 +148,18 @@ class PaginatorViewsTest(TestCase):
         self.group = Group.objects.create(title='Тестовая группа',
                                           slug='test_group')
         bilk_post: list = []
-        for i in range(TEST_OF_POST):
+        for i in range(POSTS_ON_PAGE):
             bilk_post.append(Post(text=f'Тестовый текст {i}',
                                   group=self.group,
                                   author=self.user))
         Post.objects.bulk_create(bilk_post)
 
     def test_first_page_contains_ten_records(self):
+        """Первая страница показывает нужное количество постов."""
         pages = {
-            '/': 10,
-            f'/group/{self.group.slug}/': 10,
-            f'/profile/{self.user}/': 10,
+            '/': POSTS_ON_FIRST_PAGE,
+            f'/group/{self.group.slug}/': POSTS_ON_FIRST_PAGE,
+            f'/profile/{self.user}/': POSTS_ON_FIRST_PAGE,
         }
         for adress, expected_value in pages.items():
             with self.subTest(adress=adress):
@@ -80,10 +168,11 @@ class PaginatorViewsTest(TestCase):
                                  expected_value)
 
     def test_second_page_contains_three_records(self):
+        """Вторая страница показывает нужное количество постов."""
         pages = {
-            '/': 3,
-            f'/group/{self.group.slug}/': 3,
-            f'/profile/{self.user}/': 3,
+            '/': POSTS_ON_SECOND_PAGE,
+            f'/group/{self.group.slug}/': POSTS_ON_SECOND_PAGE,
+            f'/profile/{self.user}/': POSTS_ON_SECOND_PAGE,
         }
         for adress, expected_value in pages.items():
             with self.subTest(adress=adress):

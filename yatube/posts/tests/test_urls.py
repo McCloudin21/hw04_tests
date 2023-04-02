@@ -16,7 +16,10 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.guest_client = Client()
         cls.user = User.objects.create_user(username='Test-User')
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
         cls.group = Group.objects.create(
             title='test-group',
             slug='test-slug',
@@ -29,8 +32,22 @@ class PostURLTests(TestCase):
 
     def setUp(self):
         self.guest_client = Client()
+        self.user = User.objects.create_user(username='Test-User2')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.guest_client_2 = Client()
+        self.user_2 = User.objects.create_user(username='Test-User3')
+        self.authorized_client_2 = Client()
+        self.authorized_client_2.force_login(self.user_2)
+        self.group = Group.objects.create(
+            title='test-group-2',
+            slug='test-slug-2',
+            description='test-description'
+        )
+        self.post = Post.objects.create(
+            text='Тестовый текст',
+            author=self.user
+        )
 
     def test_homepage(self):
         """Тестирование статуса страниц"""
@@ -64,6 +81,13 @@ class PostURLTests(TestCase):
         response = self.guest_client.get('/create/')
         self.assertRedirects(
             response, '/auth/login/?next=/create/'
+        )
+
+    def test_edit_page_redirect(self):
+        """Страница /edit/ перенаправляет не автора поста."""
+        response = self.authorized_client_2.get(f'/posts/{self.post.id}/edit/')
+        self.assertRedirects(
+            response, f'/posts/{self.post.id}/'
         )
 
     def test_urls_uses_correct_template(self):
