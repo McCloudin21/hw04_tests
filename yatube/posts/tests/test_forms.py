@@ -17,10 +17,6 @@ class PostCreateFormTests(TestCase):
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-
     def setUp(self):
         self.group = Group.objects.create(
             title='test-group',
@@ -55,31 +51,31 @@ class PostCreateFormTests(TestCase):
             ).exists()
         )
 
-    def test_create_form(self):
+    def test_create_form_asks_editing(self):
         """Не валидная форма просит редактирование."""
         posts_count = Post.objects.count()
         self.assertEqual(Post.objects.count(), posts_count)
 
-    def test_create_not_create_guest_client(self):
+    def test_create_post_guest_user(self):
         """Валидная форма не создаст запись в Post если неавторизован."""
         self.post = Post.objects.create(
             author=self.user,
-            text="Тестовый текст",
+            text='Тестовый текст',
         )
         posts_count = Post.objects.count()
         form_data = {
-            "text": "Изменяем текст",
-            "group": self.group.id
+            'text': 'Изменяем текст',
+            'group': self.group.id
         }
         response = self.guest_client.post(
-            reverse("posts:post_edit", args=({self.post.id})),
+            reverse('posts:post_edit', args=({self.post.id})),
             data=form_data,
         )
         self.assertRedirects(response,
-                             f"/auth/login/?next=/posts/{self.post.id}/edit/"
+                             f'/auth/login/?next=/posts/{self.post.id}/edit/'
                              )
         self.assertEqual(Post.objects.count(), posts_count)
-        self.assertFalse(Post.objects.filter(text="Изменяем текст").exists())
+        self.assertFalse(Post.objects.filter(text='Изменяем текст').exists())
 
 
 class PostEditFormTests(TestCase):
@@ -126,21 +122,21 @@ class PostEditFormTests(TestCase):
         """Валидная форма не изменит запись в Post если неавторизован."""
         self.post = Post.objects.create(
             author=self.user,
-            text="Тестовый текст",
+            text='Тестовый текст',
         )
         self.group = Group.objects.create(
-            title="Тестовая группа",
-            slug="test-slug",
-            description="Тестовое описание",
+            title='Тестовая группа',
+            slug='test-slug',
+            description='Тестовое описание',
         )
         posts_count = Post.objects.count()
-        form_data = {"text": "Изменяем текст", "group": self.group.id}
+        form_data = {'text': 'Изменяем текст', 'group': self.group.id}
         response = self.guest_client.post(
-            reverse("posts:post_edit", args=({self.post.id})),
+            reverse('posts:post_edit', args=({self.post.id})),
             data=form_data,
         )
         self.assertRedirects(response,
-                             f"/auth/login/?next=/posts/{self.post.id}/edit/"
+                             f'/auth/login/?next=/posts/{self.post.id}/edit/'
                              )
         self.assertEqual(Post.objects.count(), posts_count)
-        self.assertFalse(Post.objects.filter(text="Изменяем текст").exists())
+        self.assertFalse(Post.objects.filter(text='Изменяем текст').exists())

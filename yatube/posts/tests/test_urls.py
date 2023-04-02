@@ -35,7 +35,6 @@ class PostURLTests(TestCase):
         self.user = User.objects.create_user(username='Test-User2')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-        self.guest_client_2 = Client()
         self.user_2 = User.objects.create_user(username='Test-User3')
         self.authorized_client_2 = Client()
         self.authorized_client_2.force_login(self.user_2)
@@ -76,14 +75,14 @@ class PostURLTests(TestCase):
         response = self.authorized_client.get('/create/')
         self.assertEqual(response.status_code, 200)
 
-    def test_create_page_redirect(self):
+    def test_create_page_redirect_guest_user(self):
         """Страница /create/ перенаправляет анонимного пользователя."""
         response = self.guest_client.get('/create/')
         self.assertRedirects(
             response, '/auth/login/?next=/create/'
         )
 
-    def test_edit_page_redirect(self):
+    def test_edit_page_redirect_not_author_of_post(self):
         """Страница /edit/ перенаправляет не автора поста."""
         response = self.authorized_client_2.get(f'/posts/{self.post.id}/edit/')
         self.assertRedirects(
