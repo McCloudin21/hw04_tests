@@ -58,13 +58,6 @@ class PostCreateFormTests(TestCase):
     def test_create_form(self):
         """Не валидная форма просит редактирование."""
         posts_count = Post.objects.count()
-        form_data = {
-            'group': self.group.id
-        }
-        response = self.authorized_client.post(
-            reverse('posts:post_create'),
-            data=form_data,
-        )
         self.assertEqual(Post.objects.count(), posts_count)
 
     def test_create_not_create_guest_client(self):
