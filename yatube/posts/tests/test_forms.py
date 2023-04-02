@@ -50,7 +50,7 @@ class PostCreateFormTests(TestCase):
             ).exists()
         )
 
-    def test_create_page_asks_fill_field(self):
+    def test_create_form_invalid_data(self):
         """Не валидная форма просит заполнить поле."""
         posts_count = Post.objects.count()
         form_data = {
