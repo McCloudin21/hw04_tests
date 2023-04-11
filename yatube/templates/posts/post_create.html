@@ -14,11 +14,7 @@
             {% endif %}
           </div>
           <div class="card-body">
-            {% if is_form_edit %}
-              <form action="{% url 'posts:post_edit' post.id %}" method="post">
-            {% else %}
-              <form action="{% url 'posts:post_create' %}" method="post">
-            {% endif %}
+            <form method="post" enctype="multipart/form-data">
             {% for key, value in form.errors.items %}
               <div class="alert alert-danger" role="alert">
                {{ value|escape}}

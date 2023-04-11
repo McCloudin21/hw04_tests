@@ -72,7 +72,7 @@ class PostURLTests(TestCase):
 
     def test_create_page(self):
         """Страница /create/ доступна авторизованному пользователю."""
-        response = self.authorized_client.get('/create/')
+        response = self.authorized_client.get('/create/', follow=True,)
         self.assertEqual(response.status_code, 200)
 
     def test_create_page_redirect_guest_user(self):

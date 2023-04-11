@@ -1,9 +1,29 @@
 {% extends 'base.html' %}
+{% load thumbnail %}
 {% block content_title %}{{ title }}{% endblock %}
 {% block content %}
-      <div class="container py-5">        
+      <div class="container py-5 justify-content-center">        
         <h1>Все посты пользователя {{ author }}</h1>
-        <h3>Всего постов: {{ posts_count }} </h3>   
+        <h3>Всего постов: {{ posts_count }} </h3>
+        {% if following %}
+        <div class="my-2 d-flex justify-content-center"> 
+          <a
+            class="btn btn-lg btn-light"
+            href="{% url 'posts:profile_unfollow' author.username %}" role="button"
+          >
+            Отписаться
+          </a>
+        </div>
+        {% else %}
+        <div class="my-2 d-flex justify-content-center"> 
+          <a
+            class="btn btn-lg btn-primary"
+            href="{% url 'posts:profile_follow' author.username %}" role="button"
+          >
+            Подписаться
+          </a>
+        </div>
+        {% endif %}
         <article>
             {% for post in page_obj %}
             <ul>
@@ -14,6 +34,9 @@
                 Дата публикации: {{ post.pub_date|date:"d E Y" }}
               </li>
             </ul>
+            {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+              <img class="card-img my-2" src="{{ im.url }}">
+            {% endthumbnail %}
             <p>
               {{ post.text }}
             </p>

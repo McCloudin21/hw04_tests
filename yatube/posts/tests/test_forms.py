@@ -39,6 +39,7 @@ class PostCreateFormTests(TestCase):
         response = self.authorized_client.post(
             reverse('posts:post_create'),
             data=form_data,
+            follow=True,
         )
         self.assertRedirects(response, reverse('posts:profile',
                                                args=[self.posts.author]))
@@ -120,8 +121,11 @@ class PostEditFormTests(TestCase):
             'text': 'test_text2',
         }
         response = self.authorized_client.post(
-            reverse('posts:post_edit', args=[self.posts.id]),
+            reverse('posts:post_edit',
+                    args=[self.posts.id]
+                    ),
             data=form_data,
+            follow=True,
         )
         self.assertRedirects(response, reverse('posts:post_detail',
                                                args=[self.posts.id]))
@@ -145,8 +149,10 @@ class PostEditFormTests(TestCase):
         posts_count = Post.objects.count()
         form_data = {'text': 'Изменяем текст', 'group': self.group.id}
         response = self.guest_client.post(
-            reverse('posts:post_edit', args=({self.post.id})),
+            reverse('posts:post_edit',
+                    args=({self.post.id})),
             data=form_data,
+            follow=True,
         )
         self.assertRedirects(response,
                              f'/auth/login/?next=/posts/{self.post.id}/edit/'
